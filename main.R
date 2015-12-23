@@ -134,6 +134,35 @@ avg_goals <- (tapply(ECL$Home_score, ECL$Home_seed, mean) + tapply(ECL$Away_scor
 text(x=c(A1$value, A2$value, A3$value, A4$value), y=1:4, pos=1,
      labels=paste0("seed_",1:4," (",round(avg_goals,2),")"))
 
+### Visualize defense factors
+D2 <- list(value=result$par[6], lower=lower_par[6], upper=upper_par[6])
+D3 <- list(value=result$par[7], lower=lower_par[7], upper=upper_par[7])
+D4 <- list(value=result$par[8], lower=lower_par[8], upper=upper_par[8])
+
+d1_val <- -(D2$value+D3$value+D4$value)
+d1_interval <- c(d1_val-1.96*mean(sigma_hat[6:8]), d1_val+1.96*mean(sigma_hat[6:8]))
+D1 <- list(value=d1_val, lower=d1_interval[1], upper=d1_interval[2])
+
+plot.new()
+plot.window(xlim = c(-0.5, 0.53), ylim = c(4.2, 0.8), xaxs='i')
+# Add x-axis
+axis(side = 1, at = c(-0.5, 0, 0.5))
+# Add y-axis
+axis(side = 2, at = 4:1, las = 2)
+# Add confidence intervals
+lines(x=-c(D1$lower,D1$upper), y=c(1,1), lwd=2)
+points(-D1$value, 1, pch=18, cex=1.5)
+lines(x=-c(D2$lower,D2$upper), y=c(2,2), lwd=2)
+points(-D2$value, 2, pch=18, cex=1.5)
+lines(x=-c(D3$lower,D3$upper), y=c(3,3), lwd=2)
+points(-D3$value, 3, pch=18, cex=1.5)
+lines(x=-c(D4$lower,D4$upper), y=c(4,4), lwd=2)
+points(-D4$value, 4, pch=18, cex=1.5)
+# Add texts
+avg_concede <- (tapply(ECL$Away_score, ECL$Home_seed, mean) + tapply(ECL$Home_score, ECL$Away_seed, mean))/2
+text(x=-c(D1$value, D2$value, D3$value, D4$value), y=1:4, pos=1,
+     labels=paste0("seed_",1:4," (",round(avg_concede,2),")"))
+
 ################## Model Assessment/Application ###################
 ### Assess model by simulating 1-4 pairs, comparing to observed results.
 ### Estimating 3-2 pairs (closest match-up)
