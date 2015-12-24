@@ -225,10 +225,67 @@ makeTable <- function(matchMat, winPts=3){
   wins <- apply(matchMat, 1, function(x){sum(x>0, na.rm=T)}) + apply(matchMat, 2, function(x){sum(x<0, na.rm=T)})
   draws <- apply(matchMat, 1, function(x){sum(x==0, na.rm=T)}) + apply(matchMat, 2, function(x){sum(x==0, na.rm=T)})
   
-  return(data.frame(Seed=1:4, Points=winPts*wins+draws, Goal_diff=goalDiff))
+  table <- data.frame(Seed=1:4, Points=winPts*wins+draws, Goal_diff=goalDiff)
+  return(table[order(table$Points, decreasing=T), ])
 }
 
 # Test
 makeTable(simulateGroup())
 
-### A win = 2 pts? 3pts?
+############ A win = 2 pts? 3pts? (with tie-breaker being goal_diff)
+pool_2pt <- list()
+pool_3pt <- list()
+
+for (i in 1:10000){ #Pick number of simulation cycles here
+  pool_2pt[[i]] <- makeTable(simulateGroup(), winPts=2)
+  pool_3pt[[i]] <- makeTable(simulateGroup(), winPts=3)
+}
+
+### Count number of ties
+countTies <- function(pool){
+  # This function takes a list of ranking tables, and outputs #ties in this pool.
+  n <- length(pool)
+  tie <- c()
+  
+  for (i in 1:n){
+    tie[i] <- length(unique(pool[[i]]$Points)) < 4
+  }
+  return(c(ties=sum(tie), tieRatio=sum(tie)/n))
+}
+
+countTies(pool_2pt)
+# Results in a tie 41.55% of the times.
+countTies(pool_3pt)
+# Results in a tie 32.1% of the times.
+
+### Qualifying conditions
+qualify <- function(table){
+  # This function takes in the ranking table and outputs the qualified seeds,
+  # given that the tie-breaker being goal_diff.
+  if (length(unique(table$Points)) == 1){
+    table <- table[order(table$Goal_diff, decreasing=T), ]
+    return(c(table[1,1], table[2,1]))
+  }
+  else if(table[2,2]==table[3,2]){
+    if(table[2,3]>=table[3,3]){return(c(table[1,1],table[2,1]))}
+    else{return(c(table[1,1],table[3,1]))}
+  }
+  else {return(c(table[1,1], table[2,1]))}
+}
+
+# Test
+qualify(makeTable(simulateGroup()))
+
+countQualify <- function(pool){
+  # This function takes in a list of tables and returns the qualifying ratios.
+  qual <- list()
+  for (i in 1:length(pool)){
+    qual[[i]] <- qualify(pool[[i]])
+  }
+  qualifyRatio <- c(seed1=sum(unlist(qual)==1)/length(pool),seed2=sum(unlist(qual)==2)/length(pool),
+                    seed3=sum(unlist(qual)==3)/length(pool),seed4=sum(unlist(qual)==4)/length(pool))
+  return(qualifyRatio)
+}
+
+countQualify(pool_2pt)
+countQualify(pool_3pt)
