@@ -205,3 +205,30 @@ ggplot(dat_3_2, aes(x=obs, fill=factor(group))) +
   labs(x="Goal Difference")
 
 #################### Discuss rules ######################
+### Make simulation functions
+simulateGroup <- function(params.=params){
+  # This function returns a matrix storing the results of each match-up
+  matchMat <- matrix(rep(NA, 16), ncol=4)
+  
+  for (i in 1:4){
+    for (j in 1:4){
+      if (i == j){next}
+      matchMat[i,j] <- makePred(i, j, params.=params.)
+    }
+  }
+  return(matchMat)
+}
+
+makeTable <- function(matchMat, winPts=3){
+  # This function takes in the matrix of results, outputs the final group table.
+  goalDiff <- apply(matchMat, 1, sum, na.rm=T) - apply(matchMat, 2, sum, na.rm=T)
+  wins <- apply(matchMat, 1, function(x){sum(x>0, na.rm=T)}) + apply(matchMat, 2, function(x){sum(x<0, na.rm=T)})
+  draws <- apply(matchMat, 1, function(x){sum(x==0, na.rm=T)}) + apply(matchMat, 2, function(x){sum(x==0, na.rm=T)})
+  
+  return(data.frame(Seed=1:4, Points=winPts*wins+draws, Goal_diff=goalDiff))
+}
+
+# Test
+makeTable(simulateGroup())
+
+### A win = 2 pts? 3pts?
