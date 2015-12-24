@@ -164,5 +164,44 @@ text(x=-c(D1$value, D2$value, D3$value, D4$value), y=1:4, pos=1,
      labels=paste0("seed_",1:4," (",round(avg_concede,2),")"))
 
 ################## Model Assessment/Application ###################
+### Make prediction function
+params <- list(miu=result$par[1], H=result$par[2], A1=A1$value, A2=A2$value, 
+            A3=A3$value, A4=A4$value, D1=D1$value, D2=D2$value, D3=D3$value,
+            D4=D4$value)
+
+makePred <- function(home_seed, away_seed, params.=params){
+  lambda1 <- exp(params$miu + params$H + params[[home_seed+2]] + params[[away_seed+6]])
+  lambda2 <- exp(params$miu + params[[away_seed+2]] + params[[home_seed+6]])
+  
+  return(rpois(1, lambda1) - rpois(1, lambda2))
+}
+
 ### Assess model by simulating 1-4 pairs, comparing to observed results.
-### Estimating 3-2 pairs (closest match-up)
+score_diff_1_4 <- ECL[ECL$Home_seed == 1 & ECL$Away_seed == 4, "Score_diff"]
+pred_1_4 <- replicate(n=length(score_diff_1_4), makePred(1,4))
+
+# Visualize using side-by-side barplot
+dat_1_4 <- rbind(data.frame(group=1, obs=score_diff_1_4),
+            data.frame(group=2, obs=pred_1_4))
+
+ggplot(dat_1_4, aes(x=obs, fill=factor(group))) +
+  geom_histogram(binwidth=1, colour="black", position="dodge") +
+  scale_fill_manual("Category\n",labels = c("Observed", "Predicted"), values=c("black","red")) +
+  ggtitle(expression(atop("Histogram of Goal Difference (Projected v.s. Observed)", atop(italic("home seed = 1; away seed = 4"), "")))) +
+  labs(x="Goal Difference")
+
+### Simulating 3-2 pairs (closest match-up)
+score_diff_3_2 <- ECL[ECL$Home_seed == 3 & ECL$Away_seed == 2, "Score_diff"]
+pred_3_2 <- replicate(n=length(score_diff_3_2), makePred(3,2))
+
+# Visualize using side-by-side barplot
+dat_3_2 <- rbind(data.frame(group=1, obs=score_diff_3_2),
+                 data.frame(group=2, obs=pred_3_2))
+
+ggplot(dat_3_2, aes(x=obs, fill=factor(group))) +
+  geom_histogram(binwidth=1, colour="black",position="dodge") +
+  scale_fill_manual("Category\n",labels = c("Observed", "Predicted"), values=c("black","red")) +
+  ggtitle(expression(atop("Histogram of Goal Difference (Projected v.s. Observed)", atop(italic("home seed = 3; away seed = 2"), "")))) +
+  labs(x="Goal Difference")
+
+#################### Discuss rules ######################
