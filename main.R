@@ -267,7 +267,8 @@ qualify <- function(table){
     return(c(table[1,1], table[2,1]))
   }
   else if(table[2,2]==table[3,2]){
-    if(table[2,3]>=table[3,3]){return(c(table[1,1],table[2,1]))}
+    if(table[2,3]>table[3,3]){return(c(table[1,1],table[2,1]))}
+    if(table[2,3]==table[3,3]){return(c(table[1,1],table[sample(2:3,1),1]))}
     else{return(c(table[1,1],table[3,1]))}
   }
   else {return(c(table[1,1], table[2,1]))}
@@ -289,3 +290,7 @@ countQualify <- function(pool){
 
 countQualify(pool_2pt)
 countQualify(pool_3pt)
+# Not much difference
+
+################ A discussion of tie-breakers
+
