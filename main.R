@@ -293,4 +293,39 @@ countQualify(pool_3pt)
 # Not much difference
 
 ################ A discussion of tie-breakers
+### Generate simulations
+filterTies <- function(tablePool, matPool){
+  # Inputs: a list of simulated ranking tables; a list of simulated match result matrices;
+  # Output: lists of results with ties
+  tie_ind <- (1:length(tablePool))[sapply(tablePool, function(x){length(unique(x$Points)) != 4})]
+  tieTables <- list()
+  tieMats <- list()
+  for (i in 1:length(tie_ind)){
+    tieTables[[i]] <- tablePool[[tie_ind[i]]]
+    tieMats[[i]] <- matPool[[tie_ind[i]]]
+  }
+  
+  return(list(tieTables, tieMats))
+}
 
+matPool <- list()
+tablePool <- list()
+for (i in 1:1000){
+  matPool[[i]] <- simulateGroup()
+  tablePool[[i]] <- makeTable(matPool[[i]])
+}
+
+new.matPool <- filterTies(tablePool, matPool)[[2]]
+new.tablePool <- filterTies(tablePool, matPool)[[1]]
+
+### Summarize results
+countTies <- read.csv("countTies.csv") #import manually summarized data
+
+table(countTies$tie_seeds)
+sum(countTies$goal_solve/nrow(countTies))
+# Goal difference solves 89.97% of the ties
+sum(countTies$history_solve/nrow(countTies))
+# Match-up history solves 75.22% of the ties.
+
+table(countTies$goal_favor)
+table(countTies$history_favor)
