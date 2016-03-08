@@ -204,6 +204,42 @@ ggplot(dat_3_2, aes(x=obs, fill=factor(group))) +
   ggtitle(expression(atop("Histogram of Goal Difference (Projected v.s. Observed)", atop(italic("home seed = 3; away seed = 2"), "")))) +
   labs(x="Goal Difference")
 
+### MSE of proposed model versus benchmark
+compareMSE <- function(home_seed, away_seed, iter=1000){
+  score_diff <- ECL[ECL$Home_seed == home_seed & ECL$Away_seed == away_seed, "Score_diff"]
+  
+  pool_sk <- c()
+  pool_norm <- c()
+  pool_unif <- c()
+  for (i in 1:iter){
+    pred_sk <- replicate(n=length(score_diff), makePred(home_seed,away_seed))
+    pred_norm <- rnorm(n=length(score_diff), mean=mean(score_diff), sd=sd(score_diff))
+    pred_unif <- runif(n=length(score_diff), min=min(score_diff), max=max(score_diff))
+    pool_sk[i] <- sum((score_diff-pred_sk)^2)
+    pool_norm[i] <- sum((score_diff-pred_norm)^2)
+    pool_unif[i] <- sum((score_diff-pred_unif)^2)
+  }
+  return(c(Skellam=mean(pool_sk), norm=mean(pool_norm), unif=mean(pool_unif)))
+}
+
+### One sample K-S test
+compareKS <- function(home_seed, away_seed, iter=1000){
+  score_diff <- ECL[ECL$Home_seed == home_seed & ECL$Away_seed == away_seed, "Score_diff"]
+  
+  pool_sk <- c()
+  pool_norm <- c()
+  pool_unif <- c()
+  for (i in 1:iter){
+    pred_sk <- replicate(n=length(score_diff), makePred(home_seed,away_seed))
+    pred_norm <- rnorm(n=length(score_diff), mean=mean(score_diff), sd=sd(score_diff))
+    pred_unif <- runif(n=length(score_diff), min=min(score_diff), max=max(score_diff))
+    pool_sk[i] <- ks.test(score_diff, pred_sk)$p
+    pool_norm[i] <- ks.test(score_diff, pred_norm)$p
+    pool_unif[i] <- ks.test(score_diff, pred_unif)$p
+  }
+  return(c(Skellam=sum(pool_sk<0.05), norm=sum(pool_norm<0.05), unif=sum(pool_unif<0.05)))
+}
+
 #################### Discuss rules ######################
 ### Make simulation functions
 simulateGroup <- function(params.=params){
